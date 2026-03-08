@@ -70,13 +70,10 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
                         ${REMOTE_USER}@${REMOTE_HOST} << 'ENDSSH'
                             cd ${REMOTE_DIR} || exit 1
-                            
                             echo "Stopping and removing old container..."
-                            docker rm -f ${CONTAINER_NAME} || true
-                            
+                            docker rm -f ${CONTAINER_NAME} || true                            
                             echo "Building new Docker image..."
-                            docker build -t ${DOCKER_IMAGE} .
-                            
+                            docker build -t ${DOCKER_IMAGE} .                            
                             echo "Starting new container..."
                             docker run -d --name ${CONTAINER_NAME} -p ${PORT}:${PORT} ${DOCKER_IMAGE}
                         ENDSSH
