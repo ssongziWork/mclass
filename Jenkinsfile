@@ -34,6 +34,36 @@ pipeline {
                 // sh : 리눅스 명령어 실행
             }
         }
+
+        stage('Prepare Jar') {
+            steps {
+                sh 'cp target/demo-0.0.1-SNAPSHOT.jar ${JAR_FILE_NAME}'
+            }
+        }
+
+        stage('Copy to Remote Server') {
+            steps {
+                sshagent (credentials: [env.SSH_CREDENTIALS_ID]) {
+                    sh "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${REMOTE_USER}@${REMOTE_HOST} \"mkdir -p ${REMOTE_DIR}\""
+                    sh "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${JAR_FILE_NAME} Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/"
+                }
+            }
+        }
+
+        stage('Remote Docker Build & Deploy') {
+            steps {
+                sshagent (credentials: [env.SSH_CREDENTIALS_ID]) {
+                    sh """
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${REMOTE_USER}@${REMOTE_HOST} << ENDSSH
+    cd ${REMOTE_DIR} || exit 1
+    docker rm -f ${CONTAINER_NAME} || true
+    docker build -t ${DOCKER_IMAGE} .
+    docker run -d --name ${CONTAINER_NAME} -p ${PORT}:${PORT} ${DOCKER_IMAGE}
+ENDSSH
+                    """
+                }
+            }
+        }
     }
 
 }
