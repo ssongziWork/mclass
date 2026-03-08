@@ -26,6 +26,14 @@ pipeline {
                 checkout scm
             }
         }
+
+        stage('Maven Build') {
+            steps {
+                // 테스트는 건너뛰고 Maven 빌드
+                sh 'mvn clean package -DskipTests'
+                // sh : 리눅스 명령어 실행
+            }
+        }
     }
 
 }
